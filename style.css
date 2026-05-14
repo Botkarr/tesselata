@@ -1,0 +1,413 @@
+/* style.css - Pergamen és Fa Stílus, Tisztított Design */
+
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: 'Georgia', 'Times New Roman', Times, serif; 
+    /* Háttér: Mély, sötét barna */
+    background-color: #3d3b37; 
+    color: #f0f0f0; /* Világos szöveg */
+    overflow: hidden;
+    display: flex;
+    min-height: 100vh;
+}
+
+/* --- TÉRKÉP (A FŐ FÓKUSZ) --- */
+
+#map-container {
+    padding: 20px;
+    flex-grow: 1;
+    overflow: auto;
+    /* Kontrasztosabb barna keret a térkép körül */
+    background-color: #55514b; 
+    border-right: 2px solid #3d3b37;
+    box-shadow: inset -5px 0 10px rgba(0, 0, 0, 0.4); 
+}
+
+#gameTable {
+    border-collapse: collapse;
+    table-layout: fixed;
+    border-radius: 8px; 
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+    border: none;
+    /* Sötét alap */
+    background-color: #4a4743; 
+}
+
+#gameTable td {
+    width: 15px;
+    height: 15px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.3); 
+    position: relative;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: transform 0.15s ease-in-out; 
+}
+
+/* Felszín (Terrain) színek - Természetes, textúrához illő matt színek */
+.PLAINS { background-color: #5a8544; } /* Matt zöld */
+.HILLS { background-color: #9c734b; }  /* Barna bőr/föld */
+.MOUNTAIN { background-color: #707070; } /* Kő szürke */
+.WATER { background-color: #4f6e8c; } /* Tompa kék */
+
+/* Növényzet (Overlay) */
+.FOREST { box-shadow: inset 0 0 0 1000px rgba(11, 40, 11, 0.5); }
+.FIELD { box-shadow: inset 0 0 0 1000px rgba(220, 200, 100, 0.2); }
+.WASTELAND { box-shadow: inset 0 0 0 1000px rgba(120, 80, 50, 0.3); }
+
+/* nem tom működik e, de beépítettség szintjei */
+/* TODO: Nem működik*/
+.LVL1 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.1); } 
+.LVL2 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.2); } 
+.LVL3 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.3); }  
+.LVL4 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.4); }
+.LVL5 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.5); }
+.LVL6 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.6); }
+.LVL7 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.7); }
+.LVL8 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.8); }
+.LVL9 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 0.9); }
+.LVL10 { box-shadow: inset 0 0 0 1000px rgba(92, 92, 92, 1.0); }
+
+
+
+/* Falu jelző - Arany fókusz */
+.village {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    background-color: #e8c78c; /* Régi arany */
+    border: 1px solid #333;
+    border-radius: 50%;
+    box-shadow: 0 0 4px #e8c78c;
+    z-index: 10;
+}
+
+.selected {
+    border: 2px solid #a83232 !important; /* Vörös kijelölés */
+    box-shadow: 0 0 10px rgba(168, 50, 50, 0.8);
+    transform: scale(1.05);
+    z-index: 20;
+}
+
+/* --- Térkép Vezérlőpanel --- */
+#map-control {
+    width: 80px; /* Fix szélesség a gomboknak */
+    padding: 15px 10px;
+    background-color: #3d3b37; /* Sötét háttér */
+    border-right: 2px solid #55514b;
+    color: #f0f0f0;
+    text-align: center;
+    box-shadow: 5px 0 10px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+}
+
+#map-control h3 {
+    font-size: 0.9em;
+    border-bottom: 1px solid #8e7a68;
+    padding-bottom: 5px;
+    margin-top: 0;
+    margin-bottom: 15px;
+    color: #d4a373; /* Világosbarna címsor */
+}
+
+#map-control button {
+    /* Kör alakú gomb stílus */
+    width: 50px;
+    height: 50px;
+    line-height: 50px;
+    border-radius: 50%;
+    border: 2px solid #8e7a68;
+    margin: 8px auto;
+    display: block;
+    cursor: pointer;
+    font-size: 1.5em;
+    background-color: #55514b; /* Sötétebb barna */
+    color: #f0f0f0;
+    box-shadow: 0 3px 0 #3d3b37;
+    transition: all 0.1s;
+    text-align: center;
+}
+
+#map-control button:hover {
+    background-color: #726d66;
+}
+
+#map-control button.active {
+    /* Aktív gomb kiemelése */
+    background-color: #a83232;
+    border-color: #f0f0f0;
+    box-shadow: 0 0 10px #a83232;
+    transform: scale(1.05);
+}
+
+/* --- UI PANEL (Pergamen Textúra) --- */
+
+#ui-panel {
+    width: 300px;
+    /* Világos, pergamen-szerű barna (d4a373) */
+    background-color: #d4a373; 
+    color: #3d3b37; /* Sötét szöveg világos alapon */
+    border: 4px solid #8e7a68; /* Közepes barna keret */
+    padding: 20px;
+    border-radius: 10px; 
+    box-shadow: -8px 0 20px rgba(0,0,0,0.6); 
+    max-height: 100vh;
+    overflow-y: auto;
+    box-sizing: border-box;
+    flex-shrink: 0;
+}
+
+#ui-panel h3, #ui-panel h4 {
+    /* Elválasztó vonal (8e7a68) */
+    border-bottom: 2px solid #8e7a68;
+    color: #a83232; /* Mélyvörös címsor */
+    font-weight: bold;
+    padding-bottom: 8px;
+    margin-top: 0;
+    letter-spacing: 0.5px;
+}
+
+#cell-info p {
+    margin: 8px 0;
+    font-size: 0.95em;
+}
+
+#cell-info strong { 
+    color: #5a8544; /* Matt zöld kiemelés */
+    font-weight: bold;
+}
+
+/* --- GOMBOK ÉS INPUTOK (Fa/Kő Hatás) --- */
+
+#player-actions button {
+    /* Közepes barna (8e7a68) */
+    background-color: #8e7a68; 
+    color: #3d3b37;
+    border: none;
+    border-radius: 6px; 
+    /* Árnyék a nyomógomb hatásért (sötétebb barna) */
+    box-shadow: 0 4px 0 #6e6052; 
+    padding: 10px 12px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+    font-weight: bold;
+    text-transform: uppercase;
+    transition: all 0.1s ease-in-out;
+}
+
+#player-actions button:hover:not(:disabled) {
+    background-color: #9e8c7c;
+}
+
+/* Nyomásra mozgás */
+#player-actions button:active:not(:disabled) {
+    box-shadow: 0 1px 0 #6e6052; 
+    transform: translateY(3px);
+}
+
+#player-actions button:disabled {
+    background-color: #b0a394;
+    color: #3d3b37;
+    box-shadow: 0 4px 0 #908272;
+    cursor: not-allowed;
+}
+
+#player-actions hr {
+    border-top: 1px solid #8e7a68;
+    margin: 15px 0;
+}
+
+#player-actions input {
+    width: calc(100% - 16px);
+    padding: 8px;
+    /* Panelhoz illő, de kissé sötétebb mező */
+    background-color: #c99a6a; 
+    color: #3d3b37;
+    border: 1px solid #8e7a68;
+    border-radius: 4px; 
+    margin-bottom: 10px;
+}
+
+/* --- Térkép cellák speciális nézeteihez (Szürkeárnyalatos háttér) --- */
+/* A háttérszínt a JS állítja be, de itt biztosítjuk az alap fekete-fehér átmenetet */
+.data-view {
+    /* Alap, nagyon enyhe színezés a hangulat kedvéért */
+    background-color: #333333; 
+    transition: background-color 0.1s;
+}
+
+/* --- Erőforrás Menü --- */
+.resource-menu-container {
+    position: relative;
+    display: inline-block;
+}
+
+#resource-sub-buttons {
+    display: flex;
+    flex-direction: column; /* Egymás alá rakja őket */
+    gap: 4px;
+    position: absolute;
+    top: 60px; /* Pontosan a főgomb alá */
+    left: 0;
+    background: #333;
+    padding: 5px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    z-index: 9999;
+}
+
+#btn-resources-main, 
+#resource-sub-buttons button {
+    display: inline-flex;    /* Flexbox bekapcsolása */
+    align-items: center;     /* Függőleges középre igazítás */
+    justify-content: center; /* Vízszintes középre igazítás */
+    
+    padding: 0;              /* Eltávolítjuk a zavaró belső margókat */
+    line-height: 1;          /* Megakadályozzuk a sor magasság miatti elcsúszást */
+    font-size: 1.4rem;       /* Itt állíthatod az emoji méretét */
+    
+    cursor: pointer;
+}
+
+/* Rejtett osztály */
+.hidden {
+    display: none !important;
+}
+
+/* --- Adományozás Panel --- */
+/* --- Adományozás Panel Mezők --- */
+/* Ez kényszeríti a select-et és az input-ot egy sorba */
+.input-row {
+    display: flex;          /* Flexbox bekapcsolása */
+    flex-direction: row;    /* Vízszintes elrendezés */
+    align-items: center;    /* Függőlegesen középre igazítja őket egymáshoz képest */
+    gap: 5px;               /* Távolság a két elem között */
+    width: 100%;            /* A szülő konténer teljes szélessége */
+    margin-bottom: 10px;
+
+    /* FIX MAGASSÁG: Így garantáltan egyformák lesznek */
+    height: 36px; 
+    /* FONTOS: A padding és border ne növelje a külső méretet */
+    box-sizing: border-box;
+}
+
+/* A belső elemek arányos elosztása */
+/* --- Adományozás Panel --- */
+
+.input-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+/* Kényszerítjük a mezőket, hogy pixelre pontosan egyformák legyenek */
+.input-row select, 
+.input-row input {
+    flex: 1;
+    height: 38px;             /* Fix magasság mindkettőnek */
+    box-sizing: border-box;   /* Ez a legfontosabb: a keret is benne van a magasságban! */
+    
+    padding: 0 10px;
+    background-color: #4a4741;
+    color: #f0f0f0;
+    border: 1px solid #2d2b27;
+    border-radius: 4px;
+    font-family: 'Georgia', serif;
+    font-size: 0.95rem;
+    outline: none;
+    line-height: 36px;        /* Szöveg függőleges középre igazítása */
+}
+
+/* A típusválasztó legyen kicsit szélesebb, mint a számmező */
+.input-row select {
+    flex: 2;
+    cursor: pointer;
+    appearance: none;         /* Egyedi nyílhoz */
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+}
+
+.input-row input {
+    flex: 1;
+    text-align: center;
+}
+
+/* Adományozás gomb hozzáigazítása a magassághoz */
+.action-btn {
+    width: 100%;
+    height: 38px;             /* Ugyanaz a magasság, mint a mezőké */
+    box-sizing: border-box;
+    padding: 0;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Georgia', serif;
+    font-weight: bold;
+    transition: background 0.2s;
+}
+
+.action-btn:hover {
+    background-color: #45a049;
+}
+
+.action-btn:disabled {
+    background-color: #666;
+    cursor: not-allowed;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+.action-btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* --- Statisztika Overlay --- */
+#stats-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Sötét háttér */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Legyen mind felett */
+}
+
+.stats-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    min-width: 300px;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+.stats-row {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 1px solid #eee;
+    padding: 5px 0;
+}

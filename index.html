@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dinamikus Szimuláció</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="map-control">
+        <h3>Térképnézet</h3>
+        <button data-view="TERRAIN" title="Domborzat / Felszín">⛰️</button>
+        <button data-view="VEGETATION" title="Növényzet / Bioszféra">🌳</button>
+        <button data-view="POPULATION" title="Népesség (Szürkeárnyalat)">👤</button>
+        <button data-view="WELLNESS" title="Jólét / Vonzóerő (Szürkeárnyalat)">😊</button>
+        <button data-view="BUILTUP" title="Beépítettség">🏘️</button>
+        <button data-view="ROAD" title="Útminőség">🛣️</button> 
+        <div class="resource-menu-container">
+            <button id="btn-resources-main" title="Erőforrás Nézetek">📦</button>
+            
+            <div id="resource-sub-buttons" class="hidden">
+                <button id="FOOD" title="Élelem">🍞</button>
+                <button id="WOOD" title="Fa">🌴</button>
+                <button id="STONE" title="Kő">🗿</button>
+                <button id="GOLD" title="Arany">💰</button>
+                <button id="LUXURY_GOODS" title="Luxuscikkek">💎</button>
+            </div>
+        </div>
+        <button id="btn-stats" title="Világ Statisztikák">📊</button>
+        <button data-view="DEFAULT" class="active" title="Alapnézet (Vegyes)">🌐</button>
+    </div>
+
+    <div id="map-container">
+        <table id="gameTable"></table>
+    </div>
+
+    <div id="ui-panel">
+        <h3>Kijelölt Cella</h3>
+        <div id="cell-info">
+            <p>Válassz egy cellát a térképen.</p>
+        </div>
+        <div id="player-actions">
+            <h4>Királyi Akciók</h4>
+            <button id="btn-found-village" disabled>Falu Alapítása (1000 Arany)</button>
+            <hr>
+            <div class="action-group">
+            <label>Adományozás:</label>
+            <div class="input-row">
+                <select id="donate-type">
+                    <option value="GOLD">Arany</option>
+                    <option value="FOOD">Élelem</option>
+                    <option value="LUXURY_GOODS">Luxuscikkek</option>
+                    <option value="WOOD">Faanyag</option>
+                    <option value="STONE">kő</option>
+                </select>
+                <input type="number" id="donate-amount" value="10" min="1">
+            </div>
+            <button id="btn-donate-action" class="action-btn">Adományozás</button>
+            <small id="donation-feedback" style="color: red; display: none;">Nincs elég aranyad!</small>
+        </div>
+
+        <div class="action-group" style="margin-top: 10px;">
+            <label>Úthálózat:</label>
+            <div class="input-row">
+                <button id="btn-improve-road" class="action-btn">Út Javítása</button>
+            </div>
+    </div>
+
+    <script src="script/config.js" type="module"></script>
+    <script src="script/CellLogic.js" type="module"></script>
+    <script src="script/cell.js" type="module"></script>
+    <script src="script/PerlinNoise.js" type="module"></script>
+    <script src="script/world.js" type="module"></script>
+    <script src="script/renderer.js" type="module"></script>
+    <script src="script/player.js" type="module"></script>
+    <script src="script/main.js" type="module"></script>
+
+    <div id="stats-overlay" class="hidden">
+    <div class="stats-content">
+        <h2>Világ Statisztikák 📊</h2>
+        <div id="stats-data">
+            </div>
+        <button id="btn-close-stats">Bezárás</button>
+    </div>
+</div>
+</body>
+</html>
