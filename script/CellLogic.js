@@ -103,28 +103,55 @@ export function updatePopulation(cell) {
     const growthFactor = (cell.wellness - 100) / 100;
     const internalGrowth = Math.round(cell.population * CONFIG.BASE_GROWTH_RATE * (1 + growthFactor));
 
-    // 2. Migráció (elvándorlás)
-    let netMigration = 0;
+// 2. Migrációs szándékok összegyűjtése és súlyozása
+    let totalMigrationDesire = 0;
+    const migrationTargets = [];
+
     for (const neighbor of cell.neighbors) {
-        if (neighbor.terrain === "WATER") {continue}
+        if (neighbor.terrain === "WATER") continue;
+        
         const wellnessDiff = cell.wellness - neighbor.wellness;
         
-        if (wellnessDiff < 0) { 
-            const migrationAmount = Math.round(cell.population * CONFIG.MIGRATION_RATE * (Math.abs(wellnessDiff) / 100));
-            netMigration -= migrationAmount;
-            // csak a kivándorlás
-            neighbor.netMigration += migrationAmount; 
-
-            cell.totalTraffic += Math.abs(migrationAmount);
-            neighbor.totalTraffic += Math.abs(migrationAmount);
-        } 
+        // Csak akkor vándorolnak ki, ha a szomszéd jobb hely
+        if (wellnessDiff < 0) {
+            const attractionScore = Math.abs(wellnessDiff); // Minél jobb a szomszéd, annál vonzóbb
+            migrationTargets.push({ neighbor, attractionScore });
+            totalMigrationDesire += attractionScore;
+        }
     }
-    
-    cell.population += internalGrowth;
-    // A migráció a world-ban kerül hozzáadásra.
-    const v = Math.max(netMigration, 0);
-    if (cell.population < v) cell.population = v;
-    // Megjegyzés: A netMigration kezelése a World szintjén talán tisztább lenne.
+
+    // Ha van bárki, aki elvágyódik
+    if (totalMigrationDesire > 0 && cell.population > 0) {
+        // Kiszámoljuk a GLOBÁLIS kivándorlási rátát erre a körre
+        // Például a maximum elvándorlási ráta CONFIG.MIGRATION_RATE (pl. 0.4, azaz max 40%)
+        const averageWellnessDiff = totalMigrationDesire / cell.neighbors.length;
+        const globalMigrationRatio = CONFIG.MIGRATION_RATE * averageWellnessDiff / 100;
+        
+        // Meghatározzuk a cellát elhagyó emberek TÉNYLEGES maximális számát
+        const totalEmigrants = Math.min(cell.population, Math.round(cell.population * globalMigrationRatio));
+        
+        let actualEmigrantsDistributed = 0;
+
+        // Szétosztjuk az emigránsokat a célpontok között a vonzerő (attractionScore) arányában
+        for (const target of migrationTargets) {
+            const share = target.attractionScore / totalMigrationDesire;
+            // Az utolsó elemnél a kerekítési hibák elkerülésére a maradékot adjuk oda
+            const amount = target === migrationTargets[migrationTargets.length - 1] 
+                ? (totalEmigrants - actualEmigrantsDistributed)
+                : Math.round(totalEmigrants * share);
+
+            if (amount > 0) {
+                cell.netMigration -= amount; // A saját csökkenés (World-ben adódik hozzá)
+                target.neighbor.netMigration += amount; // A szomszéd növekedése
+                
+                // Forgalmi adatok frissítése
+                cell.totalTraffic += amount;
+                target.neighbor.totalTraffic += amount;
+
+                actualEmigrantsDistributed += amount;
+            }
+        }
+    }
 }
 
 // --- 1. LÉPÉS: TERMELÉS ÉS FOGYASZTÁS ---
