@@ -38,7 +38,7 @@ export const CONFIG = {
     // --- SZIMULÁCIÓS ÉS PLAYER BEÁLLÍTÁSOK ---
 
     // Nyersanyag típusok
-    RESUORCE_LVL: {
+    RESOURCE_LVL: {
         FOOD: 0,
         WOOD: 0,
         STONE: 0,
