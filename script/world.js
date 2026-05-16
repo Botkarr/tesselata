@@ -101,10 +101,25 @@ export class World {
         }
 
         // 3. FÁZIS: Kereskedelem lebonyolítása
-        for (const cell of this.grid.flat()) {
+        this.traded = 0; // Kör eleji számláló nullázása
+        
+        // Lapos másolat készítése a cellákról az összekeveréshez
+        const shuffledCells = this.grid.flat();
+        
+        // Fisher-Yates Shuffle algoritmus
+        for (let i = shuffledCells.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = shuffledCells[i];
+            shuffledCells[i] = shuffledCells[j];
+            shuffledCells[j] = temp;
+        }
+
+        // Kereskedelem végrehajtása a véletlenszerű sorrend alapján
+        for (const cell of shuffledCells) {
             this.traded += cell.DoTrades();
         }
 
+        // Megvett áruk hozzáadása
         for (const cell of this.grid.flat()) {
             cell.refreshInventory();
         }

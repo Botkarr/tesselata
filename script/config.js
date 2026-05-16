@@ -108,7 +108,7 @@ export const CONFIG = {
     SELLER_PRICE_MULTIPLIER: 1, // Eladási ár szorzó
     BASIC_SAFETY_FOOD_RATIO: 1.8, // Alap biztonsági készlet (a fogyasztás * szerese)
     BASIC_SAFETY_LUXURIES_RATIO: 1.2,
-    BUY_AMOUNT_MULTIPLIER: 1,   // a kereskedett árumennyiség 1 arany eltérés esetén
+    TRADE_ATTRACTION_EXPONENT: 2.5,   // a kereskedett árumennyiség 1 arany eltérés esetén
 
     BASE_GOLD_PER_POP: 15, // Ennyi aranyt éreznek normális tartaléknak az emberek
 
@@ -152,7 +152,7 @@ export const CONFIG = {
         DEFAULT: 1.0
     },
     // TODO: Kezdeni valamit a szállítási költség felvételével, ezt meg növelni.
-    ROAD_TRANSPORT_COST_FACTOR: 0, // Szorzó a szállítási költséghez az útminőség függvényében
+    ROAD_TRANSPORT_COST_FACTOR: 0.3, // Maximum áruveszteség minimális útminőségnél.
 
 
     // --- Megjelenítés Színei ---

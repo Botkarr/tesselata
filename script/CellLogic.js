@@ -275,68 +275,56 @@ export function calculateEconomicDecisions(cell) {
 
 // --- 3. LÉPÉS: KERESKEDELEM ---
 export function DoTrades(cell) {
-    //TODO: tőzsdeszerű optimalizálás. (kereslet kínálat áttekinthető megvalósítása.)
+    if (!cell.population || cell.population <= 0) return 0;
+    
+    let localTraded = 0;
 
-    if (!cell.population) return 0; // Biztonsági ellenőrzés
-    let traded = 0
-    for (const neighbor of cell.neighbors) {
-        if (!neighbor.population) {continue;} // Biztonsági ellenőrzés
-        // csak egyszer számolva minden szomszédságot:
-        if (neighbor.x < cell.x || neighbor.y < cell.y) {continue;}
+    // Minden erőforrást külön-külön értékelünk ki a szomszédokkal
+    for (const resource of ["FOOD", "WOOD", "STONE", "LUXURY_GOODS"]) {
+        if (cell.need[resource] <= 0) continue; // Ha nincs szükség rá, kihagyjuk
+        const cellPrice = calculatePrice(cell, resource, "CellPrice");
+        const buyFrom = [];
+        let totalAttraction = 0;
+        for (const neighbor of cell.neighbors) {
+            if (!neighbor.population || neighbor.population <= 0) continue;
 
-        // Iterálás az összes erőforráson
-        for (const resource of ["FOOD", "WOOD", "STONE", "LUXURY_GOODS"]) {
-            const s_price = calculatePrice(cell, resource, "DT-1" + resource)
-            const n_price = calculatePrice(neighbor, resource, "DT-2" + resource);
+            // 1. Lokális árak lekérése az aktuális fizikai készlet alapján
+            const priceNeighbor = calculatePrice(neighbor, resource, "NeighborPrice");
 
-            // ÚT MINŐSÉG SZÁMÍTÁSA
-            // console.log('cell.roadQuality:', cell.roadQuality, ' neighbor.roadQuality:', neighbor.roadQuality);
-            const qualityFactor = (cell.roadQuality + neighbor.roadQuality) / 200; // skálázás 0-1 közé
-            const connectionQuality = 1.0 - qualityFactor;
-            const transPrice = connectionQuality * CONFIG.ROAD_TRANSPORT_COST_FACTOR;
-            // azaz a szállítási költség egy darab árura
-
-            // EGY GYORS ELLENŐRZÉS
-            if (CONFIG.SRCH_NAN) {
-                if (isNaN(n_price * s_price)) {
-                    console.log(` - Trade calculation price NaN detected between cell (${cell.x}, ${cell.y}) and neighbor (${neighbor.x}, ${neighbor.y}) for resource ${resource}.`);
-                    continue;
-                }
-                if (isNaN(transPrice)) {console.log('transPrice NaN in cell: ', cell.x, cell.y); continue;}
-            }
+            // 2. Szállítási veszteségi ráta számítása az utak állapota alapján
+            // roadQuality 50 és 100 között mozog. Átlagolunk, majd skálázunk.
+            const avgRoadQuality = (cell.roadQuality + neighbor.roadQuality) / 2;
             
-            // ALKU
-            let seller, buyer;
-            // Ha így is olcsóbb, veszek.
-            if (n_price + transPrice < s_price && neighbor.inventory[resource] > 0) {
-                seller = neighbor;
-                buyer = cell;
+            // Ha az út 100-as (MAX), a veszteség 0. Ha 50-es (MIN), a veszteség a ROAD_TRANSPORT_COST_FACTOR maximuma.
+            const roadDeficitRatio = (CONFIG.ROAD_MAX_QUALITY - avgRoadQuality) / (CONFIG.ROAD_MAX_QUALITY - CONFIG.ROAD_MIN_QUALITY);
+            const transportLossRate = roadDeficitRatio * CONFIG.ROAD_TRANSPORT_COST_FACTOR;
+
+            // 3. Végső ár/db:
+            const finalPriceCell = priceNeighbor / transportLossRate;
+
+            // 4. Vonzerő (minél olcsóbb, annál vonzóbb) és maximum számítása, és hozzáadás, ha megfelelő
+            if (finalPriceCell < cellPrice) {
+                const attraction = (cellPrice - finalPriceCell) ** CONFIG.TRADE_ATTRACTION_EXPONENT;
+                const maxAmount = Math.min(neighbor.inventory[resource], Math.floor(cell.need[resource] / transportLossRate));
+                buyFrom.push({ neighbor, attraction, maxAmount, price: finalPriceCell, transportLossRate });
+                totalAttraction += attraction;
             }
-            // Ha így is drágábban veszi, eladok.
-            else if (n_price - transPrice > s_price && cell.inventory[resource] > 0) {
-                seller = cell;
-                buyer = neighbor;
-            }
-            // Nincs üzlet
-            else {
-                continue;}
-
-            let priceSeller = calculatePrice(seller, resource, "dt-3");
-            let priceBuyer = calculatePrice(buyer, resource, "dt-4");
-
-            // Egységár számítása
-            let priceDiff = priceBuyer - priceSeller - transPrice;
-            let amount = Math.min(1 + Math.floor(priceDiff * CONFIG.BUY_AMOUNT_MULTIPLIER), seller.inventory[resource]);
-
-            // Végrehajtás
-            send(seller, resource, amount, buyer);
-            send(buyer, 'GOLD', priceSeller * amount, seller);
-            // traffic a send-ben
-
-            traded += amount;
         }
+
+        //5. Szükséglet beszerzése a vonzerő arányában
+        for (const offer of buyFrom) {
+            const share = offer.attraction / totalAttraction;
+            const desiredAmount = Math.min(offer.maxAmount, Math.round(cell.need[resource] * share / offer.transportLossRate));
+            const price = offer.price;
+            if (desiredAmount > 0) {
+                send(offer.neighbor, resource, desiredAmount, cell, offer.transportLossRate);
+                send(cell, "GOLD", desiredAmount * price, offer.neighbor); // Arany küldése visszafelé
+                localTraded += desiredAmount;
+            }
+        }
+        // TODO: Hiány miatt meg nem vett összegek pótlása
     }
-    return traded;
+    return localTraded;
 }
 
 export function refreshInventory(cell) {
@@ -404,19 +392,35 @@ export function improveRoad(cell, qualityPoints) {
     cell.roadQuality = Math.min(cell.roadQuality, CONFIG.ROAD_MAX_QUALITY);
 }
 
-export function send(senderCell, resource, amount, targetCell) {
+export function send(senderCell, resource, amount, targetCell, lossRate = 0) {
     if (isNaN(amount) || amount <= 0 || !isFinite(amount)) {
-        console.log(`Invalid amount to send: ${amount}. cell (${senderCell.x}, ${senderCell.y}) to cell (${targetCell.x}, ${targetCell.y}). Resource: ${resource}`);
-        amount = 0;
+        return;
     }
+
+    // Biztonsági korrekció, hogy ne vonjunk le többet, mint ami létezik
+    if (amount > senderCell.inventory[resource]) {
+        amount = senderCell.inventory[resource];
+        console.log(`Adjusted send amount to available inventory: ${amount} for resource ${resource} 
+            from cell (${senderCell.x}, ${senderCell.y}) to cell (${targetCell.x}, ${targetCell.y}).`);
+    }
+
+    const lostAmount = amount * lossRate;
+    const deliveredAmount = amount - lostAmount;
+
+    // Az eladótól/küldőtől levonjuk a teljes feladott mennyiséget
     senderCell.inventory[resource] -= amount;
-    targetCell.bought[resource] += amount;
+    
+    // A célobjektum a veszteséggel csökkentett értéket kapja meg virtuálisan
+    targetCell.bought[resource] += deliveredAmount;
+
+    // Logisztikai statisztika (forgalom) növelése a fizikai mozgás alapján
     senderCell.totalTraffic += amount;
-    targetCell.totalTraffic += amount;
+    targetCell.totalTraffic += deliveredAmount;
 }
 
-export function calculatePrice(cell, res, loc) {
-    let price = (cell.need[res] + 0.01) / (cell.inventory[res] + cell.bought[res] + 0.01);
+export function calculatePrice(cell, res, loc="idk") {
+    // TODO: bought létjogosultságának felülvizsgálata
+    let price = (cell.need[res] + 0.01) / (cell.inventory[res] + (cell.bought[res] / 2) + 0.01);
     if(!isFinite(price)) {
     price = 1; console.log("invalid price in calculateprice " + loc)
     console.log("inventory: " + cell.inventory[res] + ", need: " + cell.need[res] + ", bought: " + cell.bought[res] + ". res:" + res);
