@@ -313,7 +313,7 @@ export function DoTrades(cell) {
 }
 
 export function refreshInventory(cell) {
-    for (let res in ["GOLD", "FOOD", "WOOD", "STONE", "LUXURY_GOODS"]) {
+    for (let res of ["GOLD", "FOOD", "WOOD", "STONE", "LUXURY_GOODS"]) {
         cell.inventory[res] += cell.bought[res];
         cell.bought[res] = 0;
     }
