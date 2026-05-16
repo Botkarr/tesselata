@@ -305,7 +305,7 @@ export function DoTrades(cell) {
             // 4. Vonzerő (minél olcsóbb, annál vonzóbb) és maximum számítása, és hozzáadás, ha megfelelő
             if (finalPriceCell < cellPrice) {
                 const attraction = (cellPrice - finalPriceCell) ** CONFIG.TRADE_ATTRACTION_EXPONENT;
-                const maxAmount = Math.min(neighbor.inventory[resource], Math.floor(cell.need[resource] / transportLossRate));
+                const maxAmount = Math.min(neighbor.inventory[resource], Math.floor(cell.need[resource] / (1 - transportLossRate)));
                 buyFrom.push({ neighbor, attraction, maxAmount, price: finalPriceCell, transportLossRate });
                 totalAttraction += attraction;
             }
@@ -314,7 +314,7 @@ export function DoTrades(cell) {
         //5. Szükséglet beszerzése a vonzerő arányában
         for (const offer of buyFrom) {
             const share = offer.attraction / totalAttraction;
-            const desiredAmount = Math.min(offer.maxAmount, Math.round(cell.need[resource] * share / offer.transportLossRate));
+            const desiredAmount = Math.min(offer.maxAmount, Math.round(cell.need[resource] * share / (1 - offer.transportLossRate)));
             const price = offer.price;
             if (desiredAmount > 0) {
                 send(offer.neighbor, resource, desiredAmount, cell, offer.transportLossRate);
