@@ -300,7 +300,7 @@ export function DoTrades(cell) {
             const transportLossRate = roadDeficitRatio * CONFIG.ROAD_TRANSPORT_COST_FACTOR;
 
             // 3. Végső ár/db:
-            const finalPriceCell = priceNeighbor / transportLossRate;
+            const finalPriceCell = priceNeighbor / (1 - transportLossRate);
 
             // 4. Vonzerő (minél olcsóbb, annál vonzóbb) és maximum számítása, és hozzáadás, ha megfelelő
             if (finalPriceCell < cellPrice) {
