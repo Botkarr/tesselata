@@ -40,7 +40,7 @@ export class Renderer {
         let maxValue = 1000;
         if (this.currentView === 'POPULATION') {
             maxValue = this.world.getMaxPopulation();}
-        else if (this.currentView === 'BUILT_UP') {
+        else if (this.currentView === 'BUILTUP') {
             maxValue = this.world.getMaxBuiltUpLevel();} 
         else if (this.currentView === 'WELLNESS') {
             maxValue = CONFIG.MAX_WELLNESS;}
